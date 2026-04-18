@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cell Survival: Bio-Quest</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+
+        .font-orbitron { font-family: 'Orbitron', sans-serif; }
+
+        .cell-bg {
+            background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+        }
+
+        .organelle-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .organelle-card:hover {
+            transform: translateY(-5px);
+            border-color: #38bdf8;
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
+        }
+
+        .progress-bar {
+            transition: width 0.5s ease-in-out;
+        }
+
+        .pulse {
+            animation: pulse-animation 2s infinite;
+        }
+
+        @keyframes pulse-animation {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+        }
+    </style>
+</head>
+<body class="cell-bg min-h-screen">
+
+    <!-- Audio Element -->
+    <audio id="bg-music" loop>
+        <source src="https://github.com/septiyentifdh-del/background/raw/refs/heads/main/Sunlit_Pathways.mp3" type="audio/mpeg">
+    </audio>
+
+    <div id="game-container" class="max-w-4xl mx-auto p-4 md:p-8">
+        <!-- Header -->
+        <header class="text-center mb-8 relative">
+            <div class="absolute right-0 top-0">
+                <button onclick="toggleMusic()" id="music-toggle" class="bg-slate-800 p-2 rounded-full border border-slate-700 hover:bg-slate-700 transition">
+                    <span id="music-icon">🔇</span>
+                </button>
+            </div>
+            <h1 class="text-4xl md:text-5xl font-orbitron font-bold text-sky-400 mb-2 tracking-tighter">CELL SURVIVAL</h1>
+            <p class="text-slate-400">Zona Organisme: Misi Pertahanan Inti</p>
+        </header>
+
+        <!-- Main UI -->
+        <div id="main-menu" class="space-y-6">
+            <div class="bg-slate-800/50 p-6 rounded-2xl border border-slate-700">
+                <h2 class="text-xl font-semibold mb-4 flex items-center">
+                    <span class="mr-2">🧬</span> Pilih Jenis Sel Anda
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <button onclick="selectCell('Hewan')" class="p-4 rounded-xl bg-slate-700 hover:bg-sky-600 transition text-left group">
+                        <div class="text-2xl mb-2">🦁</div>
+                        <div class="font-bold text-lg">Sel Hewan</div>
+                        <p class="text-xs text-slate-300">Fleksibel, memiliki Lisosom untuk proteksi ekstra.</p>
+                    </button>
+                    <button onclick="selectCell('Tumbuhan')" class="p-4 rounded-xl bg-slate-700 hover:bg-emerald-600 transition text-left group">
+                        <div class="text-2xl mb-2">🌿</div>
+                        <div class="font-bold text-lg">Sel Tumbuhan</div>
+                        <p class="text-xs text-slate-300">Kuat, memiliki Dinding Sel dan Kloroplas (Energi Surya).</p>
+                    </button>
+                    <button onclick="selectCell('Bakteri')" class="p-4 rounded-xl bg-slate-700 hover:bg-amber-600 transition text-left group">
+                        <div class="text-2xl mb-2">🦠</div>
+                        <div class="font-bold text-lg">Sel Prokariotik</div>
+                        <p class="text-xs text-slate-300">Cepat bereproduksi, struktur sederhana & tangguh.</p>
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-slate-800/50 p-6 rounded-2xl border border-slate-700">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold">Status Master Sel</h2>
+                    <span class="bg-sky-500/20 text-sky-400 px-3 py-1 rounded-full text-sm font-bold border border-sky-500/30">Rank: Pemula</span>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-slate-900/50 p-3 rounded-lg text-center">
+                        <div class="text-xs text-slate-400 uppercase">Energi</div>
+                        <div id="stat-energy" class="text-xl font-bold text-amber-400">0</div>
+                    </div>
+                    <div class="bg-slate-900/50 p-3 rounded-lg text-center">
+                        <div class="text-xs text-slate-400 uppercase">Pertahanan</div>
+                        <div id="stat-def" class="text-xl font-bold text-emerald-400">0</div>
+                    </div>
+                    <div class="bg-slate-900/50 p-3 rounded-lg text-center">
+                        <div class="text-xs text-slate-400 uppercase">Organel</div>
+                        <div id="stat-count" class="text-xl font-bold text-purple-400">0/6</div>
+                    </div>
+                    <div class="bg-slate-900/50 p-3 rounded-lg text-center">
+                        <div class="text-xs text-slate-400 uppercase">Skor</div>
+                        <div id="stat-score" class="text-xl font-bold text-white">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="startGame()" id="btn-start" class="w-full py-4 bg-sky-500 hover:bg-sky-400 text-white font-bold rounded-xl shadow-lg shadow-sky-500/20 transition-all font-orbitron text-xl">
+                MULAI EKSPEDISI SEL
+            </button>
+        </div>
+
+        <!-- Gameplay Area (Hidden initially) -->
+        <div id="gameplay" class="hidden space-y-6">
+            <div class="relative h-64 bg-slate-900 rounded-3xl border-2 border-slate-700 overflow-hidden flex items-center justify-center">
+                <div id="virus-warning" class="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded text-xs font-bold animate-bounce hidden">VIRUS DETECTED!</div>
+                <div class="text-center">
+                    <div id="cell-avatar" class="text-6xl mb-2 pulse">🧬</div>
+                    <div id="active-zone" class="text-sm text-sky-400 font-mono">Zona: Sitoplasma</div>
+                </div>
+                <!-- Mini map progress -->
+                <div class="absolute bottom-4 left-4 right-4 h-2 bg-slate-800 rounded-full overflow-hidden">
+                    <div id="mission-progress" class="progress-bar h-full bg-sky-500" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <h3 class="font-bold text-lg">Looting Organel Terdeteksi:</h3>
+            <div id="organelle-grid" class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <!-- Cards will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Quiz Modal -->
+    <div id="quiz-modal" class="fixed inset-0 modal-overlay hidden items-center justify-center p-4 z-50">
+        <div class="bg-slate-800 w-full max-w-md rounded-2xl p-6 border border-sky-500/50 shadow-2xl">
+            <div class="flex justify-between items-start mb-4">
+                <h2 id="quiz-title" class="text-xl font-bold text-sky-400">Misi Organel</h2>
+                <span class="text-2xl" id="quiz-icon">🔬</span>
+            </div>
+            <p id="quiz-question" class="text-slate-200 mb-6 leading-relaxed">Pertanyaan akan muncul di sini?</p>
+            <div id="quiz-options" class="space-y-3">
+                <!-- Options injected here -->
+            </div>
+            <div id="quiz-feedback" class="mt-4 p-3 rounded-lg text-sm hidden"></div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 border border-white/10 px-6 py-3 rounded-full shadow-2xl transform translate-y-20 transition-transform duration-300 pointer-events-none">
+        <span id="toast-msg" class="text-sm font-medium"></span>
+    </div>
+
+    <script>
+        const state = {
+            selectedCell: null,
+            energy: 0,
+            defense: 0,
+            score: 0,
+            collected: [],
+            rank: 'Pemula',
+            isGameActive: false,
+            musicPlaying: false
+        };
+
+        const music = document.getElementById('bg-music');
+        const musicIcon = document.getElementById('music-icon');
+
+        function toggleMusic() {
+            if (state.musicPlaying) {
+                music.pause();
+                musicIcon.innerText = '🔇';
+            } else {
+                music.play().catch(e => console.log("Audio play blocked by browser policy"));
+                musicIcon.innerText = '🔊';
+            }
+            state.musicPlaying = !state.musicPlaying;
+        }
+
+        const organelles = [
+            { id: 'mitokondria', name: 'Mitokondria', icon: '🔋', bonus: 'Energi +20', question: 'Apa fungsi utama mitokondria?', options: ['Sintesis Protein', 'Pusat Energi (Respirasi)', 'Pencernaan Sel', 'Penyimpan Air'], correct: 1 },
+            { id: 'nukleus', name: 'Nukleus', icon: '🧠', bonus: 'Skor +100', question: 'Bagian sel yang mengandung materi genetik (DNA) adalah...', options: ['Sitoplasma', 'Ribosom', 'Nukleus', 'Badan Golgi'], correct: 2 },
+            { id: 'ribosom', name: 'Ribosom', icon: '🏗️', bonus: 'Pertahanan +10', question: 'Apa peran utama dari Ribosom?', options: ['Sintesis Protein', 'Menghasilkan Oksigen', 'Menyimpan Lemak', 'Menghancurkan Bakteri'], correct: 0 },
+            { id: 'membran', name: 'Membran Sel', icon: '🛡️', bonus: 'Pertahanan +30', question: 'Sifat membran sel yang hanya mengizinkan zat tertentu lewat disebut...', options: ['Impermeabel', 'Semi-permeabel', 'Solid', 'Cair'], correct: 1 },
+            { id: 'golgi', name: 'Badan Golgi', icon: '📦', bonus: 'Skor +50', question: 'Organel yang berfungsi untuk sekresi dan pengemasan protein adalah...', options: ['Vakuola', 'Badan Golgi', 'Retikulum Endoplasma', 'Lisosom'], correct: 1 },
+            { id: 'lisosom', name: 'Lisosom', icon: '🧹', bonus: 'Pertahanan +15', question: 'Organel yang berfungsi sebagai "sistem pencernaan" atau pembuangan sampah sel adalah...', options: ['Lisosom', 'Kloroplas', 'Nukleolus', 'Dinding Sel'], correct: 0 }
+        ];
+
+        function selectCell(type) {
+            state.selectedCell = type;
+            const icons = { 'Hewan': '🦁', 'Tumbuhan': '🌿', 'Bakteri': '🦠' };
+            document.getElementById('cell-avatar').innerText = icons[type];
+            showToast(`Sel ${type} Terpilih! Siap untuk ekspedisi.`);
+            
+            // Highlight selected
+            document.querySelectorAll('#main-menu button').forEach(btn => {
+                btn.classList.remove('ring-2', 'ring-sky-400');
+            });
+            event.currentTarget.classList.add('ring-2', 'ring-sky-400');
+            
+            // Auto play music on first interaction if not playing
+            if (!state.musicPlaying) {
+                toggleMusic();
+            }
+        }
+
+        function startGame() {
+            if (!state.selectedCell) {
+                showToast("Pilih jenis sel terlebih dahulu!");
+                return;
+            }
+            document.getElementById('main-menu').classList.add('hidden');
+            document.getElementById('gameplay').classList.remove('hidden');
+            state.isGameActive = true;
+            renderOrganelles();
+            startVirusCycle();
+        }
+
+        function renderOrganelles() {
+            const grid = document.getElementById('organelle-grid');
+            grid.innerHTML = '';
+            organelles.forEach(org => {
+                const isCollected = state.collected.includes(org.id);
+                const card = document.createElement('div');
+                card.className = `organelle-card p-4 rounded-xl cursor-pointer ${isCollected ? 'bg-slate-700/30 opacity-50 grayscale' : 'bg-slate-800'}`;
+                card.onclick = () => !isCollected && openQuiz(org);
+                card.innerHTML = `
+                    <div class="text-3xl mb-2">${org.icon}</div>
+                    <div class="font-bold text-sm">${org.name}</div>
+                    <div class="text-[10px] text-sky-400 mt-1 uppercase">${org.bonus}</div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function openQuiz(org) {
+            const modal = document.getElementById('quiz-modal');
+            const optionsContainer = document.getElementById('quiz-options');
+            
+            document.getElementById('quiz-title').innerText = `Misi: ${org.name}`;
+            document.getElementById('quiz-icon').innerText = org.icon;
+            document.getElementById('quiz-question').innerText = org.question;
+            document.getElementById('quiz-feedback').classList.add('hidden');
+            
+            optionsContainer.innerHTML = '';
+            org.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left p-3 rounded-lg bg-slate-700 hover:bg-slate-600 transition border border-slate-600 text-sm";
+                btn.innerText = opt;
+                btn.onclick = () => checkAnswer(idx, org);
+                optionsContainer.appendChild(btn);
+            });
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function checkAnswer(idx, org) {
+            const feedback = document.getElementById('quiz-feedback');
+            feedback.classList.remove('hidden');
+            
+            if (idx === org.correct) {
+                feedback.className = "mt-4 p-3 rounded-lg text-sm bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
+                feedback.innerText = "Benar! Pengetahuan adalah kekuatan. Organel berhasil diambil!";
+                
+                state.collected.push(org.id);
+                applyBonus(org.bonus);
+                state.score += 50;
+                
+                setTimeout(() => {
+                    closeModal();
+                    updateUI();
+                    renderOrganelles();
+                    checkWin();
+                }, 1500);
+            } else {
+                feedback.className = "mt-4 p-3 rounded-lg text-sm bg-red-500/20 text-red-400 border border-red-500/30";
+                feedback.innerText = "Salah! Virus menyerang pertahananmu karena jawaban keliru.";
+                state.defense = Math.max(0, state.defense - 5);
+                updateUI();
+            }
+        }
+
+        function applyBonus(bonusStr) {
+            if (bonusStr.includes('Energi')) state.energy += 20;
+            if (bonusStr.includes('Pertahanan')) state.defense += 20;
+            if (bonusStr.includes('Skor')) state.score += 100;
+        }
+
+        function updateUI() {
+            document.getElementById('stat-energy').innerText = state.energy;
+            document.getElementById('stat-def').innerText = state.defense;
+            document.getElementById('stat-count').innerText = `${state.collected.length}/6`;
+            document.getElementById('stat-score').innerText = state.score;
+            
+            const progress = (state.collected.length / 6) * 100;
+            document.getElementById('mission-progress').style.width = `${progress}%`;
+
+            if (state.score > 200) state.rank = "Elite";
+            if (state.score > 400) state.rank = "Master Sel";
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('quiz-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function startVirusCycle() {
+            const interval = setInterval(() => {
+                if (!state.isGameActive) {
+                    clearInterval(interval);
+                    return;
+                }
+                const warning = document.getElementById('virus-warning');
+                warning.classList.remove('hidden');
+                
+                setTimeout(() => {
+                    warning.classList.add('hidden');
+                    if (state.defense > 0) {
+                        state.defense -= 2;
+                    } else {
+                        state.energy = Math.max(0, state.energy - 5);
+                    }
+                    updateUI();
+                    if (state.energy <= 0 && state.collected.length < 6) {
+                        endGame(false);
+                    }
+                }, 2000);
+            }, 8000);
+        }
+
+        function checkWin() {
+            if (state.collected.length === organelles.length) {
+                endGame(true);
+            }
+        }
+
+        function endGame(isWin) {
+            state.isGameActive = false;
+            const container = document.getElementById('game-container');
+            container.innerHTML = `
+                <div class="text-center py-20 animate-fade-in">
+                    <div class="text-7xl mb-6">${isWin ? '🏆' : '💀'}</div>
+                    <h1 class="text-4xl font-orbitron font-bold mb-4 text-sky-400">
+                        ${isWin ? 'MISI BERHASIL!' : 'SEL HANCUR!'}
+                    </h1>
+                    <p class="text-slate-400 mb-8 max-w-md mx-auto">
+                        ${isWin ? 
+                            'Anda berhasil mengamankan Inti Sel dan menjadi Master Sel sejati.' : 
+                            'Energi habis sebelum organel lengkap. Virus menguasai sistem.'}
+                    </p>
+                    <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 inline-block min-w-[300px] mb-8">
+                        <div class="flex justify-between mb-2"><span>Skor Akhir:</span> <strong>${state.score}</strong></div>
+                        <div class="flex justify-between mb-2"><span>Rank:</span> <strong>${state.rank}</strong></div>
+                        <div class="flex justify-between"><span>Organel:</span> <strong>${state.collected.length}/6</strong></div>
+                    </div>
+                    <br>
+                    <button onclick="location.reload()" class="px-8 py-3 bg-sky-500 hover:bg-sky-400 text-white font-bold rounded-full transition-all">
+                        MAIN LAGI
+                    </button>
+                </div>
+            `;
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            toast.classList.remove('translate-y-20');
+            setTimeout(() => toast.classList.add('translate-y-20'), 3000);
+        }
+    </script>
+</body>
+</html>
